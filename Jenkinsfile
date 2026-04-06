@@ -125,9 +125,14 @@ pipeline {
             steps {
                 echo "Stopping and removing old container if it exists..."
                 bat '''
-                    docker stop %BACKEND_CONTAINER% 2>nul || echo No running container to stop.
-                    docker rm   %BACKEND_CONTAINER% 2>nul || echo No container to remove.
+                    docker stop %BACKEND_CONTAINER% 2>nul
+                    exit /b 0
                 '''
+                bat '''
+                    docker rm %BACKEND_CONTAINER% 2>nul
+                    exit /b 0
+                '''
+                echo "Cleanup done."
             }
         }
 
