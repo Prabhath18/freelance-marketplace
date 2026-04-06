@@ -1,41 +1,41 @@
 const express = require("express");
 const cors = require("cors");
+const mysql = require("mysql2");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Test route
-app.get("/", (req, res) => {
-    res.send("Server is running");
-});
-
-app.listen(5000, () => {
-    console.log("Server running on port 5000");
-});
-const mysql = require("mysql2");
-
+/* ✅ MySQL Connection */
 const db = mysql.createConnection({
-    host: "host.docker.internal",
+    host: "127.0.0.1",   // ✅ FIXED
     user: "root",
     password: "admin@123",
-    database: "freelance_db"
+    database: "freelance_db",
+    port: 3306           // ✅ added (safe)
 });
 
 db.connect((err) => {
     if (err) {
         console.log("DB Connection Failed:", err);
     } else {
-        console.log("Connected to MySQL");
+        console.log("✅ Connected to MySQL");
     }
 });
+
+/* ✅ Test route */
+app.get("/", (req, res) => {
+    res.send("Server is running");
+});
+
+/* ✅ Register */
 app.post("/register", (req, res) => {
     const { name, email, password } = req.body;
 
     const sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
 
-    db.query(sql, [name, email, password], (err, result) => {
+    db.query(sql, [name, email, password], (err) => {
         if (err) {
             console.log(err);
             return res.send("Error");
@@ -43,6 +43,8 @@ app.post("/register", (req, res) => {
         res.send("User Registered Successfully");
     });
 });
+
+/* ✅ Login */
 app.post("/login", (req, res) => {
     const { email, password } = req.body;
 
@@ -61,6 +63,8 @@ app.post("/login", (req, res) => {
         }
     });
 });
+
+/* ✅ Create Task */
 app.post("/tasks", (req, res) => {
     const { title, description, price, created_by } = req.body;
 
@@ -69,7 +73,7 @@ app.post("/tasks", (req, res) => {
         VALUES (?, ?, ?, ?)
     `;
 
-    db.query(sql, [title, description, price, created_by], (err, result) => {
+    db.query(sql, [title, description, price, created_by], (err) => {
         if (err) {
             console.log(err);
             return res.send("Error creating task");
@@ -77,6 +81,8 @@ app.post("/tasks", (req, res) => {
         res.send("Task Created Successfully");
     });
 });
+
+/* ✅ Get Tasks */
 app.get("/tasks", (req, res) => {
     const sql = "SELECT * FROM tasks";
 
@@ -85,9 +91,11 @@ app.get("/tasks", (req, res) => {
             console.log(err);
             return res.send("Error fetching tasks");
         }
-        res.send(result);
+        res.json(result);
     });
 });
+
+/* ✅ Accept Task */
 app.post("/tasks/accept", (req, res) => {
     const { task_id, user_id } = req.body;
 
@@ -110,6 +118,8 @@ app.post("/tasks/accept", (req, res) => {
         }
     });
 });
+
+/* ✅ Complete Task */
 app.post("/tasks/complete", (req, res) => {
     const { task_id } = req.body;
 
@@ -119,7 +129,7 @@ app.post("/tasks/complete", (req, res) => {
         WHERE id = ?
     `;
 
-    db.query(sql, [task_id], (err, result) => {
+    db.query(sql, [task_id], (err) => {
         if (err) {
             console.log(err);
             return res.send("Error completing task");
@@ -127,4 +137,9 @@ app.post("/tasks/complete", (req, res) => {
 
         res.send("Task Completed");
     });
+});
+
+/* ✅ Start Server (KEEP LAST) */
+app.listen(5000, () => {
+    console.log("🚀 Server running on port 5000");
 });
