@@ -9,11 +9,11 @@ app.use(express.json());
 
 /* ✅ MySQL Connection */
 const db = mysql.createConnection({
-    host: "127.0.0.1",   // ✅ FIXED
+    host: "127.0.0.1",
     user: "root",
     password: "admin@123",
     database: "freelance_db",
-    port: 3306           // ✅ added (safe)
+    port: 3306
 });
 
 db.connect((err) => {
@@ -140,6 +140,10 @@ app.post("/tasks/complete", (req, res) => {
 });
 
 /* ✅ Start Server (KEEP LAST) */
-app.listen(5000, () => {
-    console.log("🚀 Server running on port 5000");
-});
+if (require.main === module) {
+    app.listen(5000, () => {
+        console.log("🚀 Server running on port 5000");
+    });
+}
+
+module.exports = app;
