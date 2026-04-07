@@ -6,8 +6,6 @@ pipeline {
         BACKEND_CONTAINER = "freelance-marketplace-backend-container"
         BACKEND_PORT      = "5000"
         REPO_URL          = "https://github.com/Prabhath18/freelance-marketplace.git"
-
-
     }
 
     stages {
@@ -120,16 +118,26 @@ pipeline {
 
         // ─────────────────────────────────────────────
         // STAGE 6 — Stop & Remove Old Container (if any)
+        //           Also kills ANY container using port 5000
+        //           to prevent "port already in use" errors
         // ─────────────────────────────────────────────
         stage('Cleanup Old Container') {
             steps {
                 echo "Stopping and removing old container if it exists..."
                 bat '''
+                    @echo off
+
+                    REM Stop & remove the named container
                     docker stop %BACKEND_CONTAINER% 2>nul
-                    exit /b 0
-                '''
-                bat '''
-                    docker rm %BACKEND_CONTAINER% 2>nul
+                    docker rm   %BACKEND_CONTAINER% 2>nul
+
+                    REM Kill ANY other container that is already bound to port 5000
+                    FOR /F "tokens=*" %%i IN ('docker ps -q --filter "publish=%BACKEND_PORT%"') DO (
+                        echo Found container %%i using port %BACKEND_PORT% — stopping it...
+                        docker stop %%i 2>nul
+                        docker rm   %%i 2>nul
+                    )
+
                     exit /b 0
                 '''
                 echo "Cleanup done."
@@ -137,11 +145,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────────────
-        // STAGE 6 — Run Backend Container
-        //
-        // To pass environment variables, uncomment the
-        // relevant -e flags below and add your values
-        // in the environment block at the top.
+        // STAGE 7 — Run Backend Container
         // ─────────────────────────────────────────────
         stage('Deploy Backend Container') {
             steps {
@@ -153,7 +157,6 @@ pipeline {
                         --restart unless-stopped ^
                         %BACKEND_IMAGE%
                 '''
-
                 echo "Backend container started successfully."
             }
             post {
@@ -167,7 +170,7 @@ pipeline {
         }
 
         // ─────────────────────────────────────────────
-        // STAGE 7 — Verify Container is Running
+        // STAGE 8 — Verify Container is Running
         // ─────────────────────────────────────────────
         stage('Health Check') {
             steps {
